@@ -1,0 +1,14 @@
+import express from 'express';
+import { WebSocketServer, WebSocket } from "ws";
+import configure from './routers';
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+configure(app);
+
+console.log(`Attempting to run server on port ${port}`);
+
+app.listen(port, () => {
+    console.log(`Listenng on port ${port}`);
+});
