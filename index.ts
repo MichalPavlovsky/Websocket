@@ -24,5 +24,30 @@ const s = app.listen(port, () => {
 const wss = new WebSocketServer({ noServer:true});
 
 s.on('upgrade', (req,socket,head) => {
-    socket.on('error', onSocketPreError)
-})
+    socket.on('error', onSocketPreError);
+
+    if (!!req.headers['BadAuth']) {
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+        socket.destroy();
+        return;
+        
+    }
+    wss.handleUpgrade(req, socket,head, (ws) => {
+        socket.removeListener('error', onSocketPreError);
+        wss.emit('connection', ws, req);
+    });
+});
+wss.on('connection', (ws,req) => {
+    ws.on('error', onSocketPostError);
+
+    ws.on('message', (msg, isBinary) => {
+        wss.clients.forEach((client) => {
+            if (ws!== client && client.readyState ===WebSocket.OPEN) {
+                client.send(msg, {binary: isBinary});
+            }
+        });
+    });
+    ws.on('close', () => {
+        console.log('Connection closed');
+    })
+});
