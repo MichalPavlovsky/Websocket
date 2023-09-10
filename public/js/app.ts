@@ -1,3 +1,59 @@
 (function () {
-    console.log('Express Rocks!');
+    let ws:WebSocket;
+    const messages =<HTMLElement>document.getElementById('messages');
+    const wsOpen = <HTMLButtonElement>document.getElementById('ws-open');
+    const wsClose = <HTMLButtonElement>document.getElementById('ws-close');
+    const wsSend = <HTMLButtonElement>document.getElementById('ws-send');
+    const wsInput = <HTMLInputElement>document.getElementById('ws-input');
+
+    function showMessage(message:string) {
+        if (!message) {
+            return;   
+        }
+        messages.textContent+= `\n${message}`;
+        messages.scrollTop= messages?.scrollHeight;
+    }
+    wsOpen.addEventListener('click', () => {
+        closeConnection();
+        ws= new WebSocket('ws://localhost:3000');
+        ws.addEventListener('error', () => {
+            showMessage('WebSocket error');
+        } )
+        ws.addEventListener('open', () => {
+            showMessage('WebSocket connection established');
+        })
+        ws.addEventListener('close', () => {
+            showMessage('WebSocket connection closed');
+        })
+        ws.addEventListener('message', (msg: MessageEvent<string>) => {
+            showMessage(`Received message: ${msg.data}`);
+        });
+    });
+
+    function closeConnection() {
+        if (!!ws) {
+            ws.close();
+        }
+    }
+
+    wsClose.addEventListener('click', closeConnection);
+
+    wsSend.addEventListener('click', () => {
+        if (!ws) {
+            showMessage('No WebSocket connection');
+            return;
+        }
+        const val = wsInput?.value;
+
+        if (!val) {
+            return;
+        } else if (!ws) {
+            showMessage('No WebSocket connection');
+            return;
+        }
+
+        ws.send(val);
+        showMessage(`Sent "${val}"`);
+        wsInput.value = '';
+    })
 })();
